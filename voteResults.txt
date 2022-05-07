@@ -1,0 +1,82 @@
+Processing Headings
+Found column Build Captain [First Choice]
+Created election Build Captain
+Important position Build Captain noted
+Found column Build Captain [Second Choice]
+Found column Build Captain [Third Choice]
+Found column Awards [First Choice]
+Created election Awards
+Found column Awards [Second Choice]
+Found column Awards [Third Choice]
+Elections: [Awards, Build Captain]
+Important elections: [Build Captain]
+Found ballot 1,a,b,c,a,b,f. Choices: Election Awards: #0,a;  #1,b;  #2,f; Election Build Captain: #0,a;  #1,b;  #2,c; 
+Found ballot 2,b,a,c,d,a,f. Choices: Election Awards: #0,d;  #1,a;  #2,f; Election Build Captain: #0,b;  #1,a;  #2,c; 
+Found ballot 3,a,c,d,a,b,b. Choices: Election Awards: #0,a;  #1,b;  #2,b; Election Build Captain: #0,a;  #1,c;  #2,d; 
+Found ballot 4,a,a,c,a,b,b. Choices: Election Awards: #0,a;  #1,b;  #2,b; Election Build Captain: #0,a;  #1,a;  #2,c; 
+Found ballot 5,a,c,b,c,a,c. Choices: Election Awards: #0,c;  #1,a;  #2,c; Election Build Captain: #0,a;  #1,c;  #2,b; 
+Found ballot 6,c,a,a,c,b,f. Choices: Election Awards: #0,c;  #1,b;  #2,f; Election Build Captain: #0,c;  #1,a;  #2,a; 
+Running election Build Captain
+Ballot 1 cast for a, choice #1 in election Build Captain
+Ballot 2 cast for b, choice #1 in election Build Captain
+Ballot 3 cast for a, choice #1 in election Build Captain
+Ballot 4 cast for a, choice #1 in election Build Captain
+Ballot 5 cast for a, choice #1 in election Build Captain
+Ballot 6 cast for c, choice #1 in election Build Captain
+Initial casting complete
+Standings of election Build Captain
+    4: a
+    1: b
+    1: c
+    0: d
+6 votes in election Build Captain
+Winner found. Winner is a with 4 votes.
+Finished election Build Captain
+Running election Awards
+Ballot 1 choice #1 is captain. Moving choices up 1.
+Ballot 1 cast for b, choice #1 in election Awards
+Ballot 2 cast for d, choice #1 in election Awards
+Ballot 3 choice #1 is captain. Moving choices up 1.
+Ballot 3 cast for b, choice #1 in election Awards
+Ballot 4 choice #1 is captain. Moving choices up 1.
+Ballot 4 cast for b, choice #1 in election Awards
+Ballot 5 cast for c, choice #1 in election Awards
+Ballot 6 cast for c, choice #1 in election Awards
+Initial casting complete
+Standings of election Awards
+    3: b
+    2: c
+    1: d
+    0: a
+    0: f
+6 votes in election Awards
+Two candidates tied in the loss of election Awards but neither are important. Candidate a will be eliminated.
+Candidate a removed.
+Starting round 2
+Standings of election Awards
+    3: b
+    2: c
+    1: d
+    0: f
+6 votes in election Awards
+Candidate f removed.
+Starting round 3
+Standings of election Awards
+    3: b
+    2: c
+    1: d
+6 votes in election Awards
+Candidate d removed.
+Ballot 2 choice #2 was already eliminated. Moving choices up 1.
+Ballot 2 choice #2 was already eliminated. Moving choices up 1.
+Ballot 2 thrown away for election Awards. Choice 2 not available.
+Starting round 4
+Standings of election Awards
+    3: b
+    2: c
+5 votes in election Awards
+Winner found. Winner is b with 3 votes.
+Finished election Awards
+Results:
+    Awards: b
+    Build Captain: a
