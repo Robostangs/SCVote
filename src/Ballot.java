@@ -16,7 +16,7 @@ public final class Ballot {
             System.err.println("Length of ballot " + ballotLine + " doesn't match number of elections!");
             System.exit(-1);
         }
-        for (int i = 1; i < voteNames.length; i++) {// start at 1 to skip timestamp
+        for (int i = 3; i < voteNames.length; i++) {// start at 3 to skip timestamp, email, name
             String thisColumString = App.columnHeadings[i];
             SimpleEntry<String, Integer> thisVoteType = App.getVoteTypeFromHeading(thisColumString);
             String thisElection = thisVoteType.getKey();

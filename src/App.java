@@ -40,7 +40,7 @@ public final class App {
                 writer.println("Processing Headings");
                 columnHeadings = line.split(",");
                 for (String heading : Arrays.asList(columnHeadings)) {
-                    if(heading.contains("Timestamp")){
+                    if(heading.contains("Timestamp")||heading.contains("Email Address")||heading.contains("Full Name")){
                         continue;
                     }
                     String position = getVoteTypeFromHeading(heading).getKey();//remove first/second/third
@@ -68,11 +68,14 @@ public final class App {
 
         for(String importantName:importantElections){
             runElection(importantName);
+            System.out.println("Running election "+importantName);
         }
 
         for(Map.Entry<String,TreeMap<String,ArrayList<Ballot>>> elections:allVotes.entrySet()){
-            if(!importantElections.contains(elections.getKey()))
+            if(!importantElections.contains(elections.getKey())){
+                System.out.println("Running election "+elections.getKey());
                 runElection(elections.getKey());
+            }
         }
         
         writer.println("Results:");
@@ -82,6 +85,7 @@ public final class App {
 
 
         writer.flush();
+        System.out.println("Done");
     }   
     public static SimpleEntry<String,Integer> getVoteTypeFromHeading(String heading){
         String electionName = heading.replaceAll(" \\[.*", "");//remove first/second/third
@@ -113,6 +117,7 @@ public final class App {
 
         for(int round=0;round<=10;round++){
             int numVotes=getNumberOfVotesInElection(election);
+            writer.println(numVotes+" votes in election "+election);
             SimpleEntry<String, Integer> currentLeader=getCurrentLeader(election);
             if(currentLeader.getValue()>numVotes/2 && currentLeader.getKey()!=null){
                 writer.println("Winner found. Winner is "+currentLeader.getKey()+" with "+currentLeader.getValue()+" votes.");
@@ -156,7 +161,23 @@ public final class App {
     public static void printElectionStandings(String election) {
         writer.println("Standings of election "+election);
         for(Map.Entry<String,ArrayList<Ballot>> candidate:getSortedStandings(election)){
-            writer.println("    "+candidate.getValue().size()+": "+candidate.getKey());
+            String line="    "+candidate.getValue().size()+": "+candidate.getKey();
+            writer.print(line);
+            for(int i=0;i<40-line.length();i++){
+                writer.print(" ");
+            }
+            writer.print("|");
+            int chunkVotes=candidate.getValue().size()*20/getNumberOfVotesInElection(election);
+            for(int i=0;i<chunkVotes;i++){
+                if(i>=10)
+                    writer.print("*");
+                else
+                    writer.print("#");
+            }
+            for(int i=0;i<20-chunkVotes;i++){
+                writer.print(" ");
+            }
+            writer.println("|");
         }
     }
 
@@ -166,7 +187,6 @@ public final class App {
         for (Map.Entry<String,ArrayList<Ballot>> candidates : votes.entrySet()) {
             numTotalVotes+=candidates.getValue().size(); 
         }
-        writer.println(numTotalVotes+" votes in election "+election);
         return numTotalVotes;
     }
 
@@ -191,8 +211,8 @@ public final class App {
         if(currentStandings.size()<2){
             return 1;
         }
-        for(int i=currentStandings.size()-2;i<=0;i++){
-            int thisNumVotes=currentStandings.get(currentStandings.size()-1).getValue().size();
+        for(int i=currentStandings.size()-2;i>=0;i--){
+            int thisNumVotes=currentStandings.get(i).getValue().size();
             if(thisNumVotes>minVotes){
                 return thisNumVotes;
             }
@@ -217,7 +237,7 @@ public final class App {
         }
         if(tie){
             if(potentialLoserVotes*2>getNextWorstNumberOfVotes(election)){
-                potentialCurrentLoser=null;//no one can be eliminated simply
+                //just eliminate first tied candidate potentialCurrentLoser=null;//no one can be eliminated simply
             }else{
                 writer.println("Two candidates tied in the loss of election "+election+" but neither are important. Candidate "+potentialCurrentLoser+" will be eliminated.");
             }
