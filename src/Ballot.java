@@ -5,34 +5,36 @@ import java.util.TreeMap;
 import java.util.AbstractMap.SimpleEntry;
 
 public final class Ballot {
-    private TreeMap<String, ArrayList<String>> votes = new TreeMap<>();
+    private TreeMap<String, ArrayList<String>> votes = new TreeMap<>();//ballotData
     private int ballotIndex;
     private TreeMap<String, Integer> currentChoiceIdxs = new TreeMap<>();
 
     public Ballot(String ballotLine, int idx) {
         ballotIndex = idx;
-        String[] voteNames = ballotLine.split(",");
+        String[] voteNames = ballotLine.split(",");//chosenCandidates
         if (voteNames.length != App.columnHeadings.length) {
             System.err.println("Length of ballot " + ballotLine + " doesn't match number of elections!");
             System.exit(-1);
         }
         for (int i = 3; i < voteNames.length; i++) {// start at 3 to skip timestamp, email, name
-            String thisColumString = App.columnHeadings[i];
+            String thisColumString = App.columnHeadings[i];//thisColumnString
             SimpleEntry<String, Integer> thisVoteType = App.getVoteTypeFromHeading(thisColumString);
             String thisElection = thisVoteType.getKey();
-            String thisVote = voteNames[i];
+            String thisVote = voteNames[i];//chosenCandidate
+            
 
-            TreeMap<String, ArrayList<Ballot>> candidatesForThisElection = App.allVotes.get(thisElection);
-            if (!candidatesForThisElection.containsKey(thisVote)) {// candidate not in list for this election
-                candidatesForThisElection.put(thisVote, new ArrayList<>());
-            }
-
-            if (!votes.containsKey(thisElection)) {// no votes by this ballot for this election
+            if (!votes.containsKey(thisElection)) {// no votes yet by this ballot for this election
                 votes.put(thisElection, new ArrayList<>());
             }
 
-            ArrayList<String> thisBallotVotesForThisElection = votes.get(thisElection);
-            thisBallotVotesForThisElection.add(thisVote);// better be in order
+            if(thisVote.length()>0){
+                TreeMap<String, ArrayList<Ballot>> candidatesForThisElection = App.allVotes.get(thisElection);
+                if (!candidatesForThisElection.containsKey(thisVote)) {// candidate not in list for this election
+                    candidatesForThisElection.put(thisVote, new ArrayList<>());
+                }
+                ArrayList<String> thisBallotVotesForThisElection = votes.get(thisElection);
+                thisBallotVotesForThisElection.add(thisVote);// better be in order
+            }
         }
     }
 
