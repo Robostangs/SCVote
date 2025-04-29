@@ -18,8 +18,7 @@ public final class Ballot {
         }
         for (int i = 3; i < voteNames.length; i++) {// start at 3 to skip timestamp, email, name
             String thisColumString = App.columnHeadings[i];//thisColumnString
-            SimpleEntry<String, Integer> thisVoteType = App.getVoteTypeFromHeading(thisColumString);
-            String thisElection = thisVoteType.getKey();
+            String thisElection = App.getElectionNameFromHeading(thisColumString);
             String thisVote = voteNames[i];//chosenCandidate
             
 

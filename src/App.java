@@ -43,7 +43,7 @@ public final class App {
                     if(heading.contains("Timestamp")||heading.contains("Email Address")||heading.contains("Full Name")){
                         continue;
                     }
-                    String position = getVoteTypeFromHeading(heading).getKey();//remove first/second/third
+                    String position = getElectionNameFromHeading(heading);//remove first/second/third
                     writer.println("Found column "+heading);
 
                     if(!allVotes.containsKey(position)){
@@ -87,20 +87,8 @@ public final class App {
         writer.flush();
         System.out.println("Done");
     }   
-    public static SimpleEntry<String,Integer> getVoteTypeFromHeading(String heading){
-        String electionName = heading.replaceAll(" \\[.*", "");//remove first/second/third
-        int precedence=0;
-        if(heading.contains("First")){
-            precedence=0;
-        }else if(heading.contains("Second")){
-            precedence=1;
-        }else if(heading.contains("Third")){
-            precedence=2;
-        }else{
-            System.err.println("Invalid precedence. Exiting");
-            System.exit(-2);
-        }
-        return(new SimpleEntry<String,Integer>(electionName,precedence));
+    public static String getElectionNameFromHeading(String heading){
+        return(heading.replaceAll(" \\[.*", ""));
     }
 
     public static void runElection(String election) throws IOException{
