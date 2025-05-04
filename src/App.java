@@ -27,13 +27,9 @@ public final class App {
         System.out.println("Looking in " + System.getProperty("user.dir") + " for voteTallies.csv");
         BufferedReader reader;
 
-        try {
-            reader = new BufferedReader(new FileReader("voteTallies.csv"));
-            writer = new PrintWriter(new FileWriter("voteResults.txt"), true);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return;
-        }
+        reader = new BufferedReader(new FileReader("voteTallies.csv"));
+        writer = new PrintWriter(new FileWriter("voteResults.txt"), true);
+
         String line;
         int lineIdx = 1;
         while ((line = reader.readLine()) != null) {
@@ -69,6 +65,8 @@ public final class App {
 
         }
 
+        reader.close();
+
         for (String importantName : importantElections) {
             runElection(importantName);
             System.out.println("Running election " + importantName);
@@ -94,6 +92,7 @@ public final class App {
         });
 
         writer.flush();
+        writer.close();
         System.out.println("Done");
     }
 
