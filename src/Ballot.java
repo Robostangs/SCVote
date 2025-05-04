@@ -7,29 +7,30 @@ import java.util.Queue;
 import java.util.TreeMap;
 
 public final class Ballot {
-    private TreeMap<String, Queue<String>> mVotes = new TreeMap<>();//ballotData
+    private TreeMap<String, Queue<String>> mVotes = new TreeMap<>();// ballotData
     private int mBallotIndex;
 
     public Ballot(String ballotLine, int idx) {
         mBallotIndex = idx;
-        String[] ballotEntries = ballotLine.split(",");//chosenCandidates
+        String[] ballotEntries = ballotLine.split(",");// chosenCandidates
         if (ballotEntries.length != App.columnHeadings.length) {
             System.err.println("Length of ballot " + ballotLine + " doesn't match number of elections!");
             System.exit(-1);
         }
-        for (int columnIdx = 3; columnIdx < ballotEntries.length; columnIdx++) {// start at 3 to skip timestamp, email, name
-            String thisColumnHeading = App.columnHeadings[columnIdx];//thisColumnString
+        for (int columnIdx = 3; columnIdx < ballotEntries.length; columnIdx++) {// start at 3 to skip timestamp, email,
+                                                                                // name
+            String thisColumnHeading = App.columnHeadings[columnIdx];// thisColumnString
             String thisElectionName = App.getElectionNameFromHeading(thisColumnHeading);
-            String thisChoice = ballotEntries[columnIdx];//chosenCandidate
-            
+            String thisChoice = ballotEntries[columnIdx];// chosenCandidate
 
             if (!mVotes.containsKey(thisElectionName)) {// no votes yet by this ballot for this election
                 mVotes.put(thisElectionName, new LinkedList<>());
             }
 
-            if(thisChoice.length()>0){
-                App.registerCandidate(thisElectionName,thisChoice);
-                mVotes.get(thisElectionName).add(thisChoice);// ballot must have numbered choices in order (choice 1 in column D, 2 in E, etc.)
+            if (thisChoice.length() > 0) {
+                App.registerCandidate(thisElectionName, thisChoice);
+                mVotes.get(thisElectionName).add(thisChoice);// ballot must have numbered choices in order (choice 1 in
+                                                             // column D, 2 in E, etc.)
             }
         }
     }
@@ -50,16 +51,18 @@ public final class Ballot {
     public boolean cast(String election) throws IOException {
         if (mVotes.get(election).size() == 0) {
             App.writer.println(
-                    "Ballot " + mBallotIndex + " thrown away for election " + election + ". No more choices available.");
+                    "Ballot " + mBallotIndex + " thrown away for election " + election
+                            + ". No more choices available.");
             return false;
         }
 
         String thisBallotsChoice = mVotes.get(election).peek();
 
-        if (!App.isCandidateAvailable(election,thisBallotsChoice)) {
-            mVotes.get(election).poll(); //like pop
+        if (!App.isCandidateAvailable(election, thisBallotsChoice)) {
+            mVotes.get(election).poll(); // like pop
             App.writer.println(
-                    "Ballot " + mBallotIndex + " choice " + thisBallotsChoice + " is captain or has already been eliminated. Trying next choice.");
+                    "Ballot " + mBallotIndex + " choice " + thisBallotsChoice
+                            + " is captain or has already been eliminated. Trying next choice.");
             return cast(election); // now the choice should be valid
         }
 

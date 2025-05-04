@@ -24,72 +24,74 @@ public final class App {
     public static PrintWriter writer;
 
     public static void main(String[] args) throws Exception {
-        System.out.println("Looking in " + System.getProperty("user.dir")+" for voteTallies.csv");
+        System.out.println("Looking in " + System.getProperty("user.dir") + " for voteTallies.csv");
         BufferedReader reader;
-        
+
         try {
             reader = new BufferedReader(new FileReader("voteTallies.csv"));
-            writer = new PrintWriter(new FileWriter("voteResults.txt"),true);
+            writer = new PrintWriter(new FileWriter("voteResults.txt"), true);
         } catch (Exception e) {
             e.printStackTrace();
             return;
         }
         String line;
-        int lineIdx=1;
-        while((line = reader.readLine())!=null){
-            line=line.replace("\"","");//google sheets adds a bunch of random quotes
+        int lineIdx = 1;
+        while ((line = reader.readLine()) != null) {
+            line = line.replace("\"", "");// google sheets adds a bunch of random quotes
 
-            if(line.contains("Timestamp")){
+            if (line.contains("Timestamp")) {
                 writer.println("Processing Headings");
                 columnHeadings = line.split(",");
                 for (String heading : Arrays.asList(columnHeadings)) {
-                    if(heading.contains("Timestamp")||heading.contains("Email Address")||heading.contains("Full Name")){
+                    if (heading.contains("Timestamp") || heading.contains("Email Address")
+                            || heading.contains("Full Name")) {
                         continue;
                     }
-                    String election = getElectionNameFromHeading(heading);//remove first/second/third
-                    writer.println("Found column "+heading);
+                    String election = getElectionNameFromHeading(heading);// remove first/second/third
+                    writer.println("Found column " + heading);
 
-                    if(!allVotes.containsKey(election)){
+                    if (!allVotes.containsKey(election)) {
                         allVotes.put(election, new TreeMap<>());
-                        writer.println("Created election "+election);
-                        if(election.contains("Captain")){
+                        writer.println("Created election " + election);
+                        if (election.contains("Captain")) {
                             importantElections.add(election);
-                            writer.println("Important election "+election+" noted");
+                            writer.println("Important election " + election + " noted");
                         }
                     }
                 }
-                writer.println("Elections: "+allVotes.keySet().toString());
-                writer.println("Important elections: "+importantElections.toString());
-            }
-            else{
-                ballots.put(lineIdx, new Ballot(line,lineIdx));
-                writer.println("Found ballot "+line+". Choices: "+ballots.get(lineIdx).toString());
+                writer.println("Elections: " + allVotes.keySet().toString());
+                writer.println("Important elections: " + importantElections.toString());
+            } else {
+                ballots.put(lineIdx, new Ballot(line, lineIdx));
+                writer.println("Found ballot " + line + ". Choices: " + ballots.get(lineIdx).toString());
                 lineIdx++;
             }
-            
+
         }
 
-        for(String importantName:importantElections){
+        for (String importantName : importantElections) {
             runElection(importantName);
-            System.out.println("Running election "+importantName);
-            if (winners.containsKey(importantName)) {  // a winner has been found so they need to be removed from the list of eligible candidates
-                allVotes.keySet().forEach((electionName) -> {deregisterCandidate(electionName, winners.get(importantName));});
-                
+            System.out.println("Running election " + importantName);
+            if (winners.containsKey(importantName)) { // a winner has been found so they need to be removed from the
+                                                      // list of eligible candidates
+                allVotes.keySet().forEach((electionName) -> {
+                    deregisterCandidate(electionName, winners.get(importantName));
+                });
+
             }
         }
 
-        for(Map.Entry<String,TreeMap<String,ArrayList<Ballot>>> elections:allVotes.entrySet()){
-            if(!importantElections.contains(elections.getKey())){
-                System.out.println("Running election "+elections.getKey());
+        for (Map.Entry<String, TreeMap<String, ArrayList<Ballot>>> elections : allVotes.entrySet()) {
+            if (!importantElections.contains(elections.getKey())) {
+                System.out.println("Running election " + elections.getKey());
                 runElection(elections.getKey());
             }
         }
-        
-        writer.println("Results:");
-        winners.forEach((election,winner)->{
-            writer.println("    "+election+": "+winner);
-        });
 
+        writer.println("Results:");
+        winners.forEach((election, winner) -> {
+            writer.println("    " + election + ": " + winner);
+        });
 
         writer.flush();
         System.out.println("Done");
