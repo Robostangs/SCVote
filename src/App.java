@@ -14,21 +14,21 @@ public final class App {
     private App() {
     }
 
-    private static TreeMap<Integer, Ballot> ballots = new TreeMap<>();
-    public static TreeMap<String, TreeMap<String, ArrayList<Ballot>>> allVotes = new TreeMap<>();// first string is
+    private static TreeMap<Integer, Ballot> sBallots = new TreeMap<>();
+    public static TreeMap<String, TreeMap<String, ArrayList<Ballot>>> sAllVotes = new TreeMap<>();// first string is
                                                                                                  // election, second is
                                                                                                  // candidate
-    public static ArrayList<String> importantElections = new ArrayList<>();
-    public static TreeMap<String, String> winners = new TreeMap<>();
-    public static String[] columnHeadings;
-    public static PrintWriter writer;
+    public static ArrayList<String> sImportantElections = new ArrayList<>();
+    public static TreeMap<String, String> sWinners = new TreeMap<>();
+    public static String[] sColumnHeadings;
+    public static PrintWriter sWriter;
 
     public static void main(String[] args) throws IOException {
         System.out.println("Looking in " + System.getProperty("user.dir") + " for voteTallies.csv");
         BufferedReader reader;
 
         reader = new BufferedReader(new FileReader("voteTallies.csv"));
-        writer = new PrintWriter(new FileWriter("voteResults.txt"), true);
+        sWriter = new PrintWriter(new FileWriter("voteResults.txt"), true);
 
         String line;
         int lineIdx = 1;
@@ -36,30 +36,30 @@ public final class App {
             line = line.replace("\"", "");// google sheets adds a bunch of random quotes
 
             if (line.contains("Timestamp")) {
-                writer.println("Processing Headings");
-                columnHeadings = line.split(",");
-                for (String heading : Arrays.asList(columnHeadings)) {
+                sWriter.println("Processing Headings");
+                sColumnHeadings = line.split(",");
+                for (String heading : Arrays.asList(sColumnHeadings)) {
                     if (heading.contains("Timestamp") || heading.contains("Email Address")
                             || heading.contains("Full Name")) {
                         continue;
                     }
                     String position = getElectionNameFromHeading(heading);// remove first/second/third
-                    writer.println("Found column " + heading);
+                    sWriter.println("Found column " + heading);
 
-                    if (!allVotes.containsKey(position)) {
-                        allVotes.put(position, new TreeMap<>());
-                        writer.println("Created election " + position);
+                    if (!sAllVotes.containsKey(position)) {
+                        sAllVotes.put(position, new TreeMap<>());
+                        sWriter.println("Created election " + position);
                         if (position.contains("Captain")) {
-                            importantElections.add(position);
-                            writer.println("Important position " + position + " noted");
+                            sImportantElections.add(position);
+                            sWriter.println("Important position " + position + " noted");
                         }
                     }
                 }
-                writer.println("Elections: " + allVotes.keySet().toString());
-                writer.println("Important elections: " + importantElections.toString());
+                sWriter.println("Elections: " + sAllVotes.keySet().toString());
+                sWriter.println("Important elections: " + sImportantElections.toString());
             } else {
-                ballots.put(lineIdx, new Ballot(line, lineIdx));
-                writer.println("Found ballot " + line + ". Choices: " + ballots.get(lineIdx).toString());
+                sBallots.put(lineIdx, new Ballot(line, lineIdx));
+                sWriter.println("Found ballot " + line + ". Choices: " + sBallots.get(lineIdx).toString());
                 lineIdx++;
             }
 
@@ -67,25 +67,25 @@ public final class App {
 
         reader.close();
 
-        for (String importantName : importantElections) {
+        for (String importantName : sImportantElections) {
             runElection(importantName);
             System.out.println("Running election " + importantName);
         }
 
-        for (Map.Entry<String, TreeMap<String, ArrayList<Ballot>>> elections : allVotes.entrySet()) {
-            if (!importantElections.contains(elections.getKey())) {
+        for (Map.Entry<String, TreeMap<String, ArrayList<Ballot>>> elections : sAllVotes.entrySet()) {
+            if (!sImportantElections.contains(elections.getKey())) {
                 System.out.println("Running election " + elections.getKey());
                 runElection(elections.getKey());
             }
         }
 
-        writer.println("Results:");
-        winners.forEach((election, winner) -> {
-            writer.println("    " + election + ": " + winner);
+        sWriter.println("Results:");
+        sWinners.forEach((election, winner) -> {
+            sWriter.println("    " + election + ": " + winner);
         });
 
-        writer.flush();
-        writer.close();
+        sWriter.flush();
+        sWriter.close();
         System.out.println("Done");
     }
 
@@ -94,9 +94,9 @@ public final class App {
     }
 
     public static void runElection(String election) throws IOException {
-        writer.println("Running election " + election);
+        sWriter.println("Running election " + election);
 
-        ballots.forEach((idx, ballot) -> {
+        sBallots.forEach((idx, ballot) -> {
             try {
                 ballot.cast(election);
             } catch (IOException e) {
@@ -104,47 +104,47 @@ public final class App {
                 e.printStackTrace();
             }
         });
-        writer.println("Initial casting complete");
+        sWriter.println("Initial casting complete");
         printElectionStandings(election);
 
         for (int round = 0; round <= 10; round++) {
             int numVotes = getNumberOfVotesInElection(election);
-            writer.println(numVotes + " votes in election " + election);
+            sWriter.println(numVotes + " votes in election " + election);
             SimpleEntry<String, Integer> currentLeader = getCurrentLeader(election);
             if (currentLeader.getValue() > numVotes / 2 && currentLeader.getKey() != null) {
-                writer.println("Winner found. Winner is " + currentLeader.getKey() + " with " + currentLeader.getValue()
+                sWriter.println("Winner found. Winner is " + currentLeader.getKey() + " with " + currentLeader.getValue()
                         + " votes.");
-                winners.put(election, currentLeader.getKey());
+                sWinners.put(election, currentLeader.getKey());
                 break;
             }
-            int numberOfCandidatesBeforeRemoval = allVotes.get(election).size();
+            int numberOfCandidatesBeforeRemoval = sAllVotes.get(election).size();
             SimpleEntry<String, Integer> currentLoser = getCurrentLoser(election);
             if (currentLoser.getKey() == null) {
-                writer.println("Unbroken tie for the lose. See standings and resolve manually.");
+                sWriter.println("Unbroken tie for the lose. See standings and resolve manually.");
                 break;
             }
-            ArrayList<Ballot> votesForLoser = allVotes.get(election).get(currentLoser.getKey());
-            allVotes.get(election).remove(currentLoser.getKey());
-            writer.println("Candidate " + currentLoser.getKey() + " removed.");
+            ArrayList<Ballot> votesForLoser = sAllVotes.get(election).get(currentLoser.getKey());
+            sAllVotes.get(election).remove(currentLoser.getKey());
+            sWriter.println("Candidate " + currentLoser.getKey() + " removed.");
 
             for (Ballot ballotForLoser : votesForLoser) { // now they are eliminated remove those that voted for them
                 ballotForLoser.cast(election);
             }
 
-            if (allVotes.get(election).size() >= numberOfCandidatesBeforeRemoval) {
+            if (sAllVotes.get(election).size() >= numberOfCandidatesBeforeRemoval) {
                 System.err.println("Recast all votes for " + currentLoser + " but now there are more candidates");
                 System.exit(-5);
             }
-            writer.println("Starting round " + (round + 2));
+            sWriter.println("Starting round " + (round + 2));
             printElectionStandings(election);
         }
 
-        writer.println("Finished election " + election);
+        sWriter.println("Finished election " + election);
     }
 
     public static ArrayList<Map.Entry<String, ArrayList<Ballot>>> getSortedStandings(String election) {
         ArrayList<Map.Entry<String, ArrayList<Ballot>>> currentStandings = new ArrayList<>(
-                allVotes.get(election).entrySet());
+                sAllVotes.get(election).entrySet());
         currentStandings.sort(Entry.comparingByValue((ArrayList<Ballot> o1, ArrayList<Ballot> o2) -> {
             return (int) Math.signum(o2.size() - o1.size());
         }));
@@ -152,30 +152,30 @@ public final class App {
     }
 
     public static void printElectionStandings(String election) {
-        writer.println("Standings of election " + election);
+        sWriter.println("Standings of election " + election);
         for (Map.Entry<String, ArrayList<Ballot>> candidate : getSortedStandings(election)) {
             String line = "    " + candidate.getValue().size() + ": " + candidate.getKey();
-            writer.print(line);
+            sWriter.print(line);
             for (int i = 0; i < 40 - line.length(); i++) {
-                writer.print(" ");
+                sWriter.print(" ");
             }
-            writer.print("|");
+            sWriter.print("|");
             int chunkVotes = candidate.getValue().size() * 20 / getNumberOfVotesInElection(election);
             for (int i = 0; i < chunkVotes; i++) {
                 if (i >= 10)
-                    writer.print("*");
+                    sWriter.print("*");
                 else
-                    writer.print("#");
+                    sWriter.print("#");
             }
             for (int i = 0; i < 20 - chunkVotes; i++) {
-                writer.print(" ");
+                sWriter.print(" ");
             }
-            writer.println("|");
+            sWriter.println("|");
         }
     }
 
     public static int getNumberOfVotesInElection(String election) {
-        TreeMap<String, ArrayList<Ballot>> votes = allVotes.get(election);
+        TreeMap<String, ArrayList<Ballot>> votes = sAllVotes.get(election);
         int numTotalVotes = 0;
         for (Map.Entry<String, ArrayList<Ballot>> candidates : votes.entrySet()) {
             numTotalVotes += candidates.getValue().size();
@@ -184,7 +184,7 @@ public final class App {
     }
 
     public static SimpleEntry<String, Integer> getCurrentLeader(String election) {
-        TreeMap<String, ArrayList<Ballot>> votes = allVotes.get(election);
+        TreeMap<String, ArrayList<Ballot>> votes = sAllVotes.get(election);
         String potentialCurrentLeader = null;
         Integer potentialLeaderVotes = 0;
         for (Map.Entry<String, ArrayList<Ballot>> candidates : votes.entrySet()) {
@@ -215,7 +215,7 @@ public final class App {
     }
 
     public static SimpleEntry<String, Integer> getCurrentLoser(String election) {
-        TreeMap<String, ArrayList<Ballot>> votes = allVotes.get(election);
+        TreeMap<String, ArrayList<Ballot>> votes = sAllVotes.get(election);
         String potentialCurrentLoser = null;
         Integer potentialLoserVotes = 9999;
         boolean tie = false;
@@ -235,7 +235,7 @@ public final class App {
                 // just eliminate first tied candidate potentialCurrentLoser=null;//no one can
                 // be eliminated simply
             } else {
-                writer.println("Two candidates tied in the loss of election " + election
+                sWriter.println("Two candidates tied in the loss of election " + election
                         + " but neither are important. Candidate " + potentialCurrentLoser + " will be eliminated.");
             }
         }
