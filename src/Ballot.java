@@ -1,38 +1,35 @@
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.TreeMap;
-import java.util.AbstractMap.SimpleEntry;
 
 public final class Ballot {
-    private TreeMap<String, ArrayList<String>> votes = new TreeMap<>();//ballotData
-    private int ballotIndex;
-    private TreeMap<String, Integer> currentChoiceIdxs = new TreeMap<>();
+    private TreeMap<String, Queue<String>> mVotes = new TreeMap<>();//ballotData
+    private int mBallotIndex;
 
     public Ballot(String ballotLine, int idx) {
-        ballotIndex = idx;
-        String[] voteNames = ballotLine.split(",");//chosenCandidates
-        if (voteNames.length != App.columnHeadings.length) {
+        mBallotIndex = idx;
+        String[] ballotEntries = ballotLine.split(",");//chosenCandidates
+        if (ballotEntries.length != App.columnHeadings.length) {
             System.err.println("Length of ballot " + ballotLine + " doesn't match number of elections!");
             System.exit(-1);
         }
-        for (int i = 3; i < voteNames.length; i++) {// start at 3 to skip timestamp, email, name
-            String thisColumString = App.columnHeadings[i];//thisColumnString
-            String thisElection = App.getElectionNameFromHeading(thisColumString);
-            String thisVote = voteNames[i];//chosenCandidate
+        for (int columnIdx = 3; columnIdx < ballotEntries.length; columnIdx++) {// start at 3 to skip timestamp, email, name
+            String thisColumnHeading = App.columnHeadings[columnIdx];//thisColumnString
+            String thisElectionName = App.getElectionNameFromHeading(thisColumnHeading);
+            String thisChoice = ballotEntries[columnIdx];//chosenCandidate
             
 
-            if (!votes.containsKey(thisElection)) {// no votes yet by this ballot for this election
-                votes.put(thisElection, new ArrayList<>());
+            if (!mVotes.containsKey(thisElectionName)) {// no votes yet by this ballot for this election
+                mVotes.put(thisElectionName, new LinkedList<>());
             }
 
-            if(thisVote.length()>0){
-                TreeMap<String, ArrayList<Ballot>> candidatesForThisElection = App.allVotes.get(thisElection);
-                if (!candidatesForThisElection.containsKey(thisVote)) {// candidate not in list for this election
-                    candidatesForThisElection.put(thisVote, new ArrayList<>());
-                }
-                ArrayList<String> thisBallotVotesForThisElection = votes.get(thisElection);
-                thisBallotVotesForThisElection.add(thisVote);// better be in order
+            if(thisChoice.length()>0){
+                App.registerCandidate(thisElectionName,thisChoice);
+                mVotes.get(thisElectionName).add(thisChoice);// ballot must have numbered choices in order (choice 1 in column D, 2 in E, etc.)
             }
         }
     }
@@ -40,61 +37,41 @@ public final class Ballot {
     @Override
     public String toString() {
         StringBuilder rBuilder = new StringBuilder();
-        for (Map.Entry<String, ArrayList<String>> thisElectionChoices : votes.entrySet()) {
+        for (Map.Entry<String, Queue<String>> thisElectionChoices : mVotes.entrySet()) {
             rBuilder.append("Election " + thisElectionChoices.getKey() + ":");
-            for (int i = 0; i < thisElectionChoices.getValue().size(); i++) {
-                rBuilder.append(" #" + i + "," + thisElectionChoices.getValue().get(i) + "; ");
+            List<String> listOfChoices = new ArrayList<>(thisElectionChoices.getValue());
+            for (int i = 0; i < listOfChoices.size(); i++) {
+                rBuilder.append(" #" + i + "," + listOfChoices.get(i) + "; ");
             }
         }
         return (rBuilder.toString());
     }
 
     public boolean cast(String election) throws IOException {
-        if (!currentChoiceIdxs.containsKey(election)) {
-            currentChoiceIdxs.put(election, -1);
-        }
-        int choice = currentChoiceIdxs.get(election) + 1;
-
-        if (votes.get(election).size() <= choice) {
+        if (mVotes.get(election).size() == 0) {
             App.writer.println(
-                    "Ballot " + ballotIndex + " thrown away for election " + election + ". Choice " + (choice + 1)
-                            + " not available.");
+                    "Ballot " + mBallotIndex + " thrown away for election " + election + ". No more choices available.");
             return false;
         }
 
-        String thisBallotsChoice = votes.get(election).get(choice);
+        String thisBallotsChoice = mVotes.get(election).peek();
 
-        if (!App.allVotes.get(election).containsKey(thisBallotsChoice)) {
-            votes.get(election).remove(choice);
+        if (!App.isCandidateAvailable(election,thisBallotsChoice)) {
+            mVotes.get(election).poll(); //like pop
             App.writer.println(
-                    "Ballot " + ballotIndex + " choice #" + (choice + 1)
-                            + " was already eliminated. Moving choices up 1.");
+                    "Ballot " + mBallotIndex + " choice " + thisBallotsChoice + " is captain or has already been eliminated. Trying next choice.");
             return cast(election); // now the choice should be valid
         }
 
         ArrayList<Ballot> thisCandidatesBallotList = App.allVotes.get(election).get(thisBallotsChoice);
 
-        for (String importantElection : App.importantElections) {
-            if (App.winners.containsKey(importantElection)) {
-                if (App.winners.get(importantElection).equals(thisBallotsChoice)) {
-                    // this ballot's choice is for someone who already won captain
-                    votes.get(election).remove(choice);
-                    App.writer.println(
-                            "Ballot " + ballotIndex + " choice #" + (choice + 1) + " is captain. Moving choices up 1.");
-                    return cast(election); // now the choice should be valid
-                }
-            }
-        }
-
         if (thisCandidatesBallotList.contains(this)) {
             System.err.println(
-                    "Ballot " + ballotIndex + " already voted for " + thisBallotsChoice + " in election " + election);
+                    "Ballot " + mBallotIndex + " already voted for " + thisBallotsChoice + " in election " + election);
             System.exit(-2);
         }
         thisCandidatesBallotList.add(this);
-        App.writer.println("Ballot " + ballotIndex + " cast for " + thisBallotsChoice + ", choice #" + (choice + 1)
-                + " in election " + election);
-        currentChoiceIdxs.put(election, choice);
+        App.writer.println("Ballot " + mBallotIndex + " cast for " + thisBallotsChoice + " in election " + election);
 
         return true;
     }
