@@ -23,7 +23,7 @@ public final class App {
     public static String[] sColumnHeadings;
     public static PrintWriter sWriter;
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         System.out.println("Looking in " + System.getProperty("user.dir") + " for voteTallies.csv");
         BufferedReader reader;
 
@@ -43,15 +43,15 @@ public final class App {
                             || heading.contains("Full Name")) {
                         continue;
                     }
-                    String position = getElectionNameFromHeading(heading);// remove first/second/third
+                    String election = getElectionNameFromHeading(heading);// remove first/second/third
                     sWriter.println("Found column " + heading);
 
-                    if (!sAllVotes.containsKey(position)) {
-                        sAllVotes.put(position, new TreeMap<>());
-                        sWriter.println("Created election " + position);
-                        if (position.contains("Captain")) {
-                            sImportantElections.add(position);
-                            sWriter.println("Important position " + position + " noted");
+                    if (!sAllVotes.containsKey(election)) {
+                        sAllVotes.put(election, new TreeMap<>());
+                        sWriter.println("Created election " + election);
+                        if (election.contains("Captain")) {
+                            sImportantElections.add(election);
+                            sWriter.println("Important election " + election + " noted");
                         }
                     }
                 }
@@ -70,6 +70,13 @@ public final class App {
         for (String importantName : sImportantElections) {
             runElection(importantName);
             System.out.println("Running election " + importantName);
+            if (sWinners.containsKey(importantName)) { // a winner has been found so they need to be removed from the
+                                                      // list of eligible candidates
+                sAllVotes.keySet().forEach((electionName) -> {
+                    deregisterCandidate(electionName, sWinners.get(importantName));
+                });
+
+            }
         }
 
         for (Map.Entry<String, TreeMap<String, ArrayList<Ballot>>> elections : sAllVotes.entrySet()) {
@@ -241,6 +248,29 @@ public final class App {
         }
 
         return new SimpleEntry<>(potentialCurrentLoser, potentialLoserVotes);
+    }
+
+    public static void registerCandidate(String electionName, String candidate) {
+        TreeMap<String, ArrayList<Ballot>> candidatesForThisElection = sAllVotes.get(electionName);
+        if (!candidatesForThisElection.containsKey(candidate)) {// candidate not in list for this election
+            candidatesForThisElection.put(candidate, new ArrayList<>());
+        }
+    }
+
+    public static void deregisterCandidate(String electionName, String candidate) throws Exception {
+        TreeMap<String, ArrayList<Ballot>> candidatesVotesForThisElection = sAllVotes.get(electionName);
+        if (candidatesVotesForThisElection.get(candidate).size() > 0) {
+            throw new Exception("Trying to deregister candidate " + candidate + " in election " + electionName
+                    + " but they have votes!");
+        }
+    }
+
+    public static boolean isCandidateAvailable(String electionName, String candidate) {
+        if (!App.sAllVotes.get(electionName).containsKey(candidate)) {
+            return false;
+        }
+
+        return true;
     }
 
 }
