@@ -10,7 +10,7 @@ public final class Ballot {
 
     public Ballot(String ballotLine, int idx) {
         mBallotIndex = idx;
-        String[] voteNames = ballotLine.split(",");// chosenCandidates
+        String[] voteNames = App.parseCsvRow(ballotLine);// chosenCandidates
         if (voteNames.length != App.sColumnHeadings.length) {
             System.err.println("Length of ballot " + ballotLine + " doesn't match number of elections!");
             System.exit(-1);
@@ -78,7 +78,8 @@ public final class Ballot {
                     // this ballot's choice is for someone who already won captain
                     mVotes.get(election).remove(choice);
                     App.sWriter.println(
-                            "Ballot " + mBallotIndex + " choice #" + (choice + 1) + " is captain. Moving choices up 1.");
+                            "Ballot " + mBallotIndex + " choice #" + (choice + 1)
+                                    + " is captain. Moving choices up 1.");
                     return cast(election); // now the choice should be valid
                 }
             }

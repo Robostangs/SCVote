@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.AbstractMap.SimpleEntry;
@@ -16,8 +17,8 @@ public final class App {
 
     private static TreeMap<Integer, Ballot> sBallots = new TreeMap<>();
     public static TreeMap<String, TreeMap<String, ArrayList<Ballot>>> sAllVotes = new TreeMap<>();// first string is
-                                                                                                 // election, second is
-                                                                                                 // candidate
+                                                                                                  // election, second is
+                                                                                                  // candidate
     public static ArrayList<String> sImportantElections = new ArrayList<>();
     public static TreeMap<String, String> sWinners = new TreeMap<>();
     public static String[] sColumnHeadings;
@@ -33,13 +34,13 @@ public final class App {
         String line;
         int lineIdx = 1;
         while ((line = reader.readLine()) != null) {
-            line = line.replace("\"", "");// google sheets adds a bunch of random quotes
 
             if (line.contains("Timestamp")) {
                 sWriter.println("Processing Headings");
-                sColumnHeadings = line.split(",");
+                sColumnHeadings = App.parseCsvRow(line);
                 for (String heading : Arrays.asList(sColumnHeadings)) {
                     if (heading.contains("Timestamp") || heading.contains("Email Address")
+                            || heading.contains("Username")
                             || heading.contains("Full Name")) {
                         continue;
                     }
@@ -112,8 +113,9 @@ public final class App {
             sWriter.println(numVotes + " votes in election " + election);
             SimpleEntry<String, Integer> currentLeader = getCurrentLeader(election);
             if (currentLeader.getValue() > numVotes / 2 && currentLeader.getKey() != null) {
-                sWriter.println("Winner found. Winner is " + currentLeader.getKey() + " with " + currentLeader.getValue()
-                        + " votes.");
+                sWriter.println(
+                        "Winner found. Winner is " + currentLeader.getKey() + " with " + currentLeader.getValue()
+                                + " votes.");
                 sWinners.put(election, currentLeader.getKey());
                 break;
             }
@@ -241,6 +243,40 @@ public final class App {
         }
 
         return new SimpleEntry<>(potentialCurrentLoser, potentialLoserVotes);
+    }
+
+    public static String[] parseCsvRow(String csvRowString) {
+        List<String> cells = new ArrayList<>();
+        boolean inText = false;
+        char lastChar = '\0';
+        StringBuilder currentStr = new StringBuilder();
+        for (char character : csvRowString.toCharArray()) {
+            if (!inText) {
+                if (character == '\"') {
+                    inText = true;
+                    if (lastChar == '\"') { // "" means an actual quote not end of quoted segment
+                        currentStr.append(character);
+                    }
+                } else if (character == ',') {
+                    cells.add(currentStr.toString());
+                    currentStr.setLength(0);
+                } else {
+                    currentStr.append(character);
+                }
+            } else {
+                if (character == '\"') {
+                    inText = false;
+                } else {
+                    currentStr.append(character);
+                }
+            }
+
+            lastChar = character;
+        }
+        cells.add(currentStr.toString());
+        if (inText)
+            throw new IllegalArgumentException(csvRowString);
+        return cells.toArray(new String[0]);
     }
 
 }
